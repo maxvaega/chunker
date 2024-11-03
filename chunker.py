@@ -9,20 +9,20 @@ from langchain_openai import OpenAIEmbeddings
 
 def load_markdown(file_path):
   """
-  Carica il contenuto di un file Markdown.
+  Loads the content of a Markdown file.
   """
   try:
       with open(file_path, 'r', encoding='utf-8') as file:
           content = file.read()
       return content
   except Exception as e:
-      print(f"Errore nel caricamento del file: {e}")
+      print(f"Error loading file: {e}")
       return None
 
 def split_into_chunks(text, separator='##'):
   """
-  Suddivide il testo in chunk ogni volta che trova il separatore specificato.
-  Mantiene il separatore all'inizio di ogni chunk.
+  Splits the text into chunks whenever it finds the specified separator.
+  Keeps the separator at the beginning of each chunk.
   """
   splitter = RecursiveCharacterTextSplitter(
       chunk_size=1500,
@@ -35,7 +35,7 @@ def split_into_chunks(text, separator='##'):
 
 def save_to_csv(chunks, metadata, output_file='output/output_chunks.csv'):
   """
-  Salva i chunk in un file CSV con i relativi metadata.
+  Saves chunks to a CSV file with related metadata.
   """
   data = {
       'filename': [metadata['filename']] * len(chunks),
@@ -45,39 +45,38 @@ def save_to_csv(chunks, metadata, output_file='output/output_chunks.csv'):
   df = pd.DataFrame(data)
   try:
       df.to_csv(output_file, index=False)
-      print(f"Chunk salvati con successo in {output_file}")
+      print(f"Chunks successfully saved to {output_file}")
   except Exception as e:
-      print(f"Errore nel salvataggio del CSV: {e}")
+      print(f"Error saving CSV: {e}")
 
 def upload_to_pinecone(chunks, metadata, index_name, namespace):
   """
-  Carica i chunk su Pinecone.
+  Uploads chunks to Pinecone.
   """
-  load_dotenv()  # Carica le variabili d'ambiente dal file .env
+  load_dotenv()  # Load environment variables from .env file
   
   PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
   PINECONE_ENVIRONMENT = os.getenv('PINECONE_ENVIRONMENT')
   
   if not PINECONE_API_KEY or not PINECONE_ENVIRONMENT:
-      print("API Key o Environment di Pinecone non configurati correttamente.")
+      print("Pinecone API Key or Environment not properly configured.")
       return
   
-  # Inizializzazione di Pinecone con la nuova sintassi
+  # Initialize Pinecone with new syntax
   pc = Pinecone(api_key=PINECONE_API_KEY)
   
   """
   Environment variables for pinecone instance and index
-
   """
   index_name='aistruttore'
   namespace='aistruttore1'
 
-  # Verifica se l'indice esiste
+  # Check if index exists
   if index_name not in pc.list_indexes().names():
-      # Crea l'indice se non esiste
+      # Create index if it doesn't exist
       pc.create_index(
           name=index_name,
-          dimension=1536,  # Dimensione per OpenAI embeddings
+          dimension=1536,  # Dimension for OpenAI embeddings
           metric='cosine',
           spec=ServerlessSpec(
               cloud='aws',
@@ -85,10 +84,10 @@ def upload_to_pinecone(chunks, metadata, index_name, namespace):
           )
       )
   
-  # Ottieni l'indice
+  # Get the index
   index = pc.Index(index_name)
   
-  # Per ogni chunk, genera un embedding e caricalo
+  # Generate embedding and upload for each chunk
   embeddings = OpenAIEmbeddings()
   
   vectors = []
@@ -105,18 +104,18 @@ def upload_to_pinecone(chunks, metadata, index_name, namespace):
       })
   
   try:
-      # Carica i vettori in batch
+      # Upload vectors in batch
       index.upsert(vectors=vectors, namespace=namespace)
-      print(f"Chunk caricati con successo su Pinecone nell'indice '{index_name}' nel namespace '{namespace}'.")
+      print(f"Chunks successfully uploaded to Pinecone in index '{index_name}' and namespace '{namespace}'.")
   except Exception as e:
-      print(f"Errore nel caricamento su Pinecone: {e}")
+      print(f"Error uploading to Pinecone: {e}")
 
 def main():
-  # Input da parte dell'utente
-  file_path = input("Inserisci il percorso del file Markdown (.md): ").strip()
+  # User input
+  file_path = input("Enter the path to the Markdown file (.md): ").strip()
   
   if not os.path.isfile(file_path):
-      print("Il file specificato non esiste.")
+      print("The specified file does not exist.")
       return
   
   content = load_markdown(file_path)
@@ -130,13 +129,13 @@ def main():
       'datetime': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
   }
   
-  # Chiedi all'utente dove salvare i chunk
-  print("\nDove desideri salvare i chunk?")
-  print("1. Salva localmente in CSV")
-  print("2. Carica su Pinecone")
-  print("3. Entrambi")
+  # Ask user where to save the chunks
+  print("\nWhere do you want to save the chunks?")
+  print("1. Save locally to CSV")
+  print("2. Upload to Pinecone")
+  print("3. Both")
   
-  choice = input("Inserisci il numero della tua scelta (1/2/3): ").strip()
+  choice = input("Enter your choice (1/2/3): ").strip()
   
   if choice == '1':
       save_to_csv(chunks, metadata)
@@ -146,7 +145,7 @@ def main():
       save_to_csv(chunks, metadata)
       upload_to_pinecone(chunks, metadata)
   else:
-      print("Scelta non valida. Uscita dal programma.")
+      print("Invalid choice. Exiting program.")
 
 if __name__ == "__main__":
   main()
