@@ -4,21 +4,34 @@ Creates chunks starting from MD documents using specified delimiter
 
 <img src="https://i.ibb.co/mSTjxw1/chunker.webp" alt="Chunker Profile"/>
 
-## First setup
+## Setup
 
 If using [conda](https://docs.anaconda.com/miniconda/#miniconda):
 ```python
 conda create -n chunker python=3.12.7
 ```
 
-install dependencies:
+### 1 install dependencies
+
 ```python
-pip install langchain
-pip install langchain-openai
-pip install pandas 
-pip install pinecone-client 
-pip install python-dotenv 
-pip install openai
+pip install -r requirements.txt
+```
+
+### 2 setup environment variables
+
+create .env file with:
+
+```.env
+PINECONE_API_KEY=your_pinecone_api_key
+PINECONE_ENVIRONMENT=your_pinecone_environment
+OPENAI_API_KEY=your_openai_api_key
+```
+
+## Usage
+
+Run the script from the command line:
+```python
+python main.py
 ```
 
 ## Documentation

@@ -1,0 +1,6 @@
+langchain
+langchain-openai
+pandas 
+pinecone-client 
+python-dotenv 
+openai
