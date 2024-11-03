@@ -128,6 +128,8 @@ def main():
       'filename': os.path.basename(file_path),
       'datetime': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
   }
+  filename = os.path.basename(file_path)
+  print(f"\nCreated {len(chunks)} chunks from file '{filename}'")
   
   # Ask user where to save the chunks
   print("\nWhere do you want to save the chunks?")

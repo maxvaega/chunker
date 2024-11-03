@@ -1,5 +1,5 @@
-# all /output csv files
-output/*.csv
+# all files in /output folder
+output/*.*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
