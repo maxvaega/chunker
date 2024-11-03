@@ -49,7 +49,7 @@ def save_to_csv(chunks, metadata, output_file='output/output_chunks.csv'):
   except Exception as e:
       print(f"Error saving CSV: {e}")
 
-def upload_to_pinecone(chunks, metadata, index_name, namespace):
+def upload_to_pinecone(chunks, metadata):
   """
   Uploads chunks to Pinecone.
   """

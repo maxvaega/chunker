@@ -19,11 +19,11 @@ pip install python-dotenv
 pip install openai
 ```
 
-## documentation
+## Documentation
 
 use the following references:
 - [langchain text_splitter](https://api.python.langchain.com/en/latest/character/langchain_text_splitters.character.RecursiveCharacterTextSplitter.html)
 - [pinecone upsert vectors](https://docs.pinecone.io/guides/data/upsert-data)
 
 ## Credits
-Made with ❤️ by [Massimo Olivieri](https://linktr.ee/maxvaega)
+Made with ❤️ by [Massimo Olivieri](https://linktr.ee/maxvaega) 🪂
