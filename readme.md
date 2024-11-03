@@ -2,6 +2,8 @@
 
 Creates chunks starting from MD documents using specified delimiter
 
+<img src="https://i.ibb.co/mSTjxw1/chunker.webp" alt="Chunker Profile"/>
+
 ## First setup
 
 If using [conda](https://docs.anaconda.com/miniconda/#miniconda):
