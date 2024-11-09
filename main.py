@@ -96,7 +96,7 @@ def upload_to_pinecone(chunks, metadata):
   for i, chunk in enumerate(chunks):
       embedding = embeddings.embed_query(chunk)
       vectors.append({
-          'id': f"{metadata['filename']}_{i}",
+          'id': f"{metadata['filename']}_{str(i+1).zfill(3)}",
           'values': embedding,
           'metadata': {
               'filename': metadata['filename'],
