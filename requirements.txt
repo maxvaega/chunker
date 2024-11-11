@@ -1,6 +1,5 @@
 langchain
 langchain-openai
 pandas 
-pinecone-client 
+langchain-pinecone
 python-dotenv 
-openai
