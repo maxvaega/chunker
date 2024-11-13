@@ -1,5 +1,5 @@
 import os
-import pandas as pd
+import json
 from datetime import datetime
 from dotenv import load_dotenv
 import re
@@ -9,7 +9,7 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 
 def load_key():
-    load_dotenv()  # Load environment variables from .env file
+    load_dotenv()
     os.environ["LANGCHAIN_TRACING_V2"] = "true"
     LANGCHAIN_ENDPOINT="https://api.smith.langchain.com"
     os.environ["LANGCHAIN_API_KEY"] = os.getenv('LANGCHAIN_API_KEY')
@@ -20,12 +20,8 @@ def extract_title(chunk):
     Extracts the title from a markdown chunk.
     The title is expected to be in the first line, preceded by # characters.
     """
-    # Get the first line of the chunk
     first_line = chunk.strip().split('\n')[0]
-    
-    # Remove all # characters from the start and any leading/trailing whitespace
     title = re.sub(r'^#+\s*', '', first_line).strip()
-    
     return title
 
 def load_markdown(file_path):
@@ -54,30 +50,56 @@ def split_into_chunks(text, separator='##'):
     chunks = splitter.split_text(text)
     return chunks
 
-def save_to_csv(chunks, metadata, output_file='output/output_chunks.csv'):
+def prepare_chunks_data(chunks, metadata):
     """
-    Saves chunks to a CSV file with related metadata.
+    Prepares chunks data with metadata for saving.
+    Returns a tuple containing:
+    1. List of dictionaries with full chunk data
+    2. List of chunk IDs
+    3. List of metadata dictionaries for Pinecone
+    4. List of text chunks
     """
-    # Generate chunk IDs and extract titles
     chunk_ids = [f"{metadata['filename']}_{str(i+1).zfill(3)}" for i in range(len(chunks))]
     chunk_titles = [extract_title(chunk) for chunk in chunks]
+    
+    # Prepare full chunk data for JSON storage
+    chunks_data = []
+    # Prepare metadata list for Pinecone
+    pinecone_metadata = []
+    
+    for chunk_id, title, text in zip(chunk_ids, chunk_titles, chunks):
+        # Full chunk data for JSON
+        chunk_data = {
+            'id': chunk_id,
+            'filename': metadata['filename'],
+            'datetime': metadata['datetime'],
+            'title': title,
+            'text': text
+        }
+        chunks_data.append(chunk_data)
+        
+        # Metadata for Pinecone
+        pinecone_metadata.append({
+            'filename': metadata['filename'],
+            'datetime': metadata['datetime'],
+            'title': title
+        })
+    
+    return chunks_data, chunk_ids, pinecone_metadata, chunks
 
-    data = {
-        'id': chunk_ids,
-        'filename': [metadata['filename']] * len(chunks),
-        'datetime': [metadata['datetime']] * len(chunks),
-        'title': chunk_titles,
-        'text': chunks
-    }
-    df = pd.DataFrame(data)
+def save_to_json(chunks_data, output_file='output/output_chunks.json'):
+    """
+    Saves chunks to a JSON file with related metadata.
+    """
     try:
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
-        df.to_csv(output_file, index=False)
+        with open(output_file, 'w', encoding='utf-8') as f:
+            json.dump(chunks_data, f, ensure_ascii=False, indent=2)
         print(f"Chunks successfully saved to {output_file}")
     except Exception as e:
-        print(f"Error saving CSV: {e}")
+        print(f"Error saving JSON: {e}")
 
-def upload_to_pinecone(chunks, metadata):
+def upload_to_pinecone(chunk_ids, chunks, metadatas):
     """
     Uploads chunks to Pinecone using LangChain's Pinecone VectorStore.
     """
@@ -92,24 +114,10 @@ def upload_to_pinecone(chunks, metadata):
 
     try:
         index_name = 'aistruttore'
-        namespace = 'aistruttore3'
+        namespace = 'aistruttore4'
 
         # Initialize embeddings
         embeddings = OpenAIEmbeddings()
-
-        # Generate chunk IDs and extract titles
-        chunk_ids = [f"{metadata['filename']}_{str(i+1).zfill(3)}" for i in range(len(chunks))]
-        chunk_titles = [extract_title(chunk) for chunk in chunks]
-
-        # Prepare metadata for each chunk
-        metadatas = [
-            {
-                'filename': metadata['filename'],
-                'datetime': metadata['datetime'],
-                'title': title
-            }
-            for title in chunk_titles
-        ]
 
         # Upload data using LangChain's Pinecone VectorStore
         vectorstore = PineconeVectorStore.from_texts(
@@ -154,21 +162,24 @@ def main():
 
     # Ask user where to save the chunks
     print("\nWhere do you want to save the chunks?")
-    print("1. Save locally to CSV")
+    print("1. Save locally to JSON")
     print("2. Upload to Pinecone")
     print("3. Both")
 
     choice = input("Enter your choice (1/2/3): ").strip()
 
+    # Prepare chunks data for all cases
+    chunks_data, chunk_ids, pinecone_metadata, chunks_text = prepare_chunks_data(chunks, metadata)
+    
     if choice == '1':
-        output_file=f"output/{filename}_{datetime.now().strftime("%Y-%m-%d %H:%M")}.csv"
-        save_to_csv(chunks, metadata, output_file)
+        output_file = f"output/{filename}_{datetime.now().strftime('%Y-%m-%d %H:%M')}.json"
+        save_to_json(chunks_data, output_file)
     elif choice == '2':
-        upload_to_pinecone(chunks, metadata)
+        upload_to_pinecone(chunk_ids, chunks_text, pinecone_metadata)
     elif choice == '3':
-        output_file=f"output/{filename}_{datetime.now().strftime("%Y-%m-%d %H:%M")}.csv"
-        save_to_csv(chunks, metadata, output_file)
-        upload_to_pinecone(chunks, metadata)
+        output_file = f"output/{filename}_{datetime.now().strftime('%Y-%m-%d %H:%M')}.json"
+        save_to_json(chunks_data, output_file)
+        upload_to_pinecone(chunk_ids, chunks_text, pinecone_metadata)
     else:
         print("Invalid choice. Exiting program.")
 
