@@ -9,6 +9,7 @@ Creates chunks starting from MD documents using specified delimiter
 If using [conda](https://docs.anaconda.com/miniconda/#miniconda):
 ```python
 conda create -n chunker python=3.12.7
+conda activate chunker
 ```
 
 ### 1 install dependencies
