@@ -135,7 +135,7 @@ def upload_to_pinecone(chunk_ids, chunks, metadatas):
 
 def main():
     # User input
-    file_path = input("Enter the path to the Markdown file (.md): ").strip()
+    file_path = input("Enter the path to the Markdown file (.md): ").strip("'", )
 
     if not os.path.isfile(file_path):
         print("The specified file does not exist.")
