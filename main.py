@@ -114,7 +114,7 @@ def upload_to_pinecone(chunk_ids, chunks, metadatas):
 
     try:
         index_name = 'aistruttore'
-        namespace = 'aistruttore5'
+        namespace = 'aistruttore1'
 
         # Initialize embeddings
         embeddings = OpenAIEmbeddings(
