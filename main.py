@@ -114,10 +114,12 @@ def upload_to_pinecone(chunk_ids, chunks, metadatas):
 
     try:
         index_name = 'aistruttore'
-        namespace = 'aistruttore4'
+        namespace = 'aistruttore5'
 
         # Initialize embeddings
-        embeddings = OpenAIEmbeddings()
+        embeddings = OpenAIEmbeddings(
+            model="text-embedding-3-small"
+        )
 
         # Upload data using LangChain's Pinecone VectorStore
         vectorstore = PineconeVectorStore.from_texts(
