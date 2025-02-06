@@ -3,3 +3,4 @@ langchain-openai
 pandas 
 langchain-pinecone
 python-dotenv 
+requests==2.31.0

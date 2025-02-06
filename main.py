@@ -3,6 +3,8 @@ import json
 from datetime import datetime
 from dotenv import load_dotenv
 import re
+import requests
+from urllib.parse import urlparse
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
@@ -135,15 +137,41 @@ def upload_to_pinecone(chunk_ids, chunks, metadatas):
     except Exception as e:
         print(f"Error uploading to Pinecone: {e}")
 
+def is_url(path):
+    """
+    Check if the given path is a URL.
+    """
+    try:
+        result = urlparse(path)
+        return all([result.scheme, result.netloc])
+    except:
+        return False
+
+def download_markdown_from_url(url):
+    """
+    Downloads markdown content from a URL.
+    """
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.text
+    except Exception as e:
+        print(f"Error downloading from URL: {e}")
+        return None
+
 def main():
     # User input
-    file_path = input("Enter the path to the Markdown file (.md): ").strip("'", )
+    file_path = input("Enter the path to the Markdown file (.md): ").strip("'")
 
-    if not os.path.isfile(file_path):
-        print("The specified file does not exist.")
-        return
+    # Handle both URLs and local files
+    if is_url(file_path):
+        content = download_markdown_from_url(file_path)
+    else:
+        if not os.path.isfile(file_path):
+            print("The specified file does not exist.")
+            return
+        content = load_markdown(file_path)
 
-    content = load_markdown(file_path)
     if content is None:
         return
 
