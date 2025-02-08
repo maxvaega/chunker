@@ -164,3 +164,5 @@ cython_debug/
 
 .DS_Store
 output/.DS_Store
+
+uploads/

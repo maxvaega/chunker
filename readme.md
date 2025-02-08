@@ -4,6 +4,13 @@ Creates chunks starting from MD documents using specified delimiter
 
 <img src="https://i.ibb.co/mSTjxw1/chunker.webp" alt="Chunker Profile"/>
 
+## Web version - **under construction work in progress**
+
+TODO:
+- manage openAI embeddings
+- test backend functionalities and chunks production
+- test frontend functionalities
+
 ## Setup
 
 If using [conda](https://docs.anaconda.com/miniconda/#miniconda):
