@@ -1,0 +1,22 @@
+{
+    "version": 2,
+    "builds": [
+      {
+        "src": "app/main.py",
+        "use": "@vercel/python"
+      }
+    ],
+    "routes": [
+        {
+          "src": "/(.*)",
+          "dest": "app/api.py"
+      }
+    ],
+    "env": {
+      "JWT_SECRET_KEY": "@JWT_SECRET_KEY",
+      "LANGCHAIN_API_KEY": "@LANGCHAIN_API_KEY",
+      "LANGCHAIN_PROJECT": "@LANGCHAIN_PROJECT",
+      "PINECONE_API_KEY": "@PINECONE_API_KEY",
+      "PINECONE_ENVIRONMENT": "@PINECONE_ENVIRONMENT"
+    }
+  }

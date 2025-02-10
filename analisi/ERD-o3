@@ -1,0 +1,101 @@
+Engineering Requirements Document
+
+**1. Introduction**
+
+This document outlines the engineering requirements for extending the current codebase to expose its functionalities via a RESTful API using FastAPI, as described in the provided PRD. The goal is to create an endpoint that accepts a Markdown file URL, processes the file into chunks, and routes the data locally and/or to Pinecone. This document details the technical and functional requirements, architectural overview, and a roadmap with milestones.
+
+**2. System Overview**
+
+The system will extend the application by implementing a new API endpoint (/process-markdown) via FastAPI. It will allow users to submit a Markdown file URL along with upload options. The system is structured to handle authentication using JWT tokens and involves key functions such as file download, text splitting, chunk preparation, and data upload to both a local JSON file and Pinecone.
+
+**3. Functional Requirements**
+
+**a. Endpoint Functionality**
+
+-   The API endpoint (/process-markdown) must accept HTTP POST requests.
+-   It should validate the input, ensuring a valid Markdown URL and accepted upload_options (local, pinecone).
+-   The endpoint will process the file by downloading content, splitting it into chunks, and extracting titles from chunk text.
+-   It must return a JSON response containing success messages and chunk details if processing is successful, or proper error messages otherwise.
+
+**b. Authentication**
+
+-   Utilize JWT for token-based authentication.
+-   Validate Authorization header in each request, returning HTTP 401 on failure.
+
+**c. Data Processing**
+
+-   Implement functions to download Markdown files from the provided URL.
+-   Use a text splitter (RecursiveCharacterTextSplitter) to segment the file into configurable chunks.
+-   Extract titles from each chunk using regex by parsing the first line of each section.
+
+**d. Data Storage and Upload**
+
+-   Implement upload functionality to Pinecone (using LangChain's PineconeVectorStore) with associated metadata.
+
+**4. Non-functional Requirements**
+
+-   Security: Ensure tokens are securely managed and sensitive credentials, such as API keys, are handled via environment variables.
+-   Maintainability: Adopt a modular repository structure dividing code into separate modules (e.g., app, tests, scripts) for clarity and future scalability.
+-   Performance: Optimize text processing and chunk-upload mechanisms to ensure minimal latency.
+
+**5. Architecture and Repository Structure**
+
+The repository will be organized as follows:
+
+- /chunker  
+• /app: Contains the application code  
+- main.py: Entry point handling file processing and user input  
+- api.py: API endpoint definitions  
+- config.py: Application configuration including environment variable management  
+- auth.py: JWT authentication implementation  
+- utils.py: Helper functions for processing, such as download and text-splitting  
+- requirements.txt: Dependency list  
+• /tests: Unit and integration tests  
+• /output: Directory to store generated JSON files containing chunk data  
+• /scripts: Deployment scripts (e.g., deploy.sh)  
+• .env, .gitignore, README.md: Configuration and project documentation files
+
+**6. Roadmap and Milestones**
+
+**Phase 1 – Requirements and Design (Weeks 1-2)**
+
+-   Finalize detailed requirements and review the PRD
+-   Design the high-level architecture and repository structure
+-   Identify external dependencies (FastAPI, Pinecone, LangChain, JWT libraries)
+
+**Phase 2 – Development of Core Features (Weeks 3-5)**
+
+-   Implement download and processing functions
+-   Develop the API endpoint (/process-markdown) including authentication and input validation
+-   Implement local storage functionality to save processed chunk JSONs
+-   Integrate Pinecone upload functionality via LangChain
+
+**Phase 3 – Testing and Quality Assurance (Weeks 6-7)**
+
+-   Write unit tests and integration tests for all core components
+-   Perform error handling verification for various failure scenarios
+-   Conduct performance testing and optimize the chunk processing mechanism
+
+**Phase 4 – Deployment and Monitoring (Weeks 8-9)**
+
+-   Configure Vercel environment for serverless deployment
+-   Set up environment variables and secure configuration for API keys and tokens
+-   Establish logging and monitoring mechanisms to track API performance and errors
+-   Final validation and sign-off before production release
+
+**Phase 5 – Future Enhancements (Post-release)**
+
+-   Gather user feedback and monitor system performance
+-   Plan enhancements based on new requirements
+
+**7. Risk Analysis and Mitigation**
+
+-   Data Processing Risks: Potential issues with large file handling can be mitigated via chunk processing optimizations and asynchronous processing libraries.
+-   Security Risks: Ensure strict management of authentication tokens and environment variables to prevent unauthorized access.
+-   Integration Risks: Thorough testing of integration with Pinecone and other external services to handle API changes or downtime.
+
+**8. Conclusion**
+
+The engineering requirements provided in this document set the stage for a robust, scalable, and secure API extension. By following the stipulated milestones and roadmap, the team will deliver a solution that leverages modern cloud and serverless technologies, while ensuring the system remains maintainable and extensible.  
+  
+This document serves as the blueprint for the engineering team to implement an efficient solution that meets the functional and non-functional demands outlined in the original PRD.

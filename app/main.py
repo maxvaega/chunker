@@ -10,6 +10,8 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 
+from app.api import app as api_app
+
 def load_key():
     load_dotenv()
     os.environ["LANGCHAIN_TRACING_V2"] = "true"
@@ -19,8 +21,8 @@ def load_key():
 
 def extract_title(chunk):
     """
-    Extracts the title from a markdown chunk.
-    The title is expected to be in the first line, preceded by # characters.
+    Estrae il titolo da un chunk Markdown.
+    Il titolo è previsto nella prima riga, preceduto da caratteri #.
     """
     first_line = chunk.strip().split('\n')[0]
     title = re.sub(r'^#+\s*', '', first_line).strip()
@@ -28,20 +30,20 @@ def extract_title(chunk):
 
 def load_markdown(file_path):
     """
-    Loads the content of a Markdown file.
+    Carica il contenuto di un file Markdown.
     """
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             content = file.read()
         return content
     except Exception as e:
-        print(f"Error loading file: {e}")
+        print(f"Errore caricando il file: {e}")
         return None
 
 def split_into_chunks(text, separator='##'):
     """
-    Splits the text into chunks whenever it finds the specified separator.
-    Keeps the separator at the beginning of each chunk.
+    Suddivide il testo in chunk ogni volta che trova il separatore specificato.
+    Mantiene il separatore all'inizio di ogni chunk.
     """
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=1500,
@@ -54,23 +56,23 @@ def split_into_chunks(text, separator='##'):
 
 def prepare_chunks_data(chunks, metadata):
     """
-    Prepares chunks data with metadata for saving.
-    Returns a tuple containing:
-    1. List of dictionaries with full chunk data
-    2. List of chunk IDs
-    3. List of metadata dictionaries for Pinecone
-    4. List of text chunks
+    Prepara i dati dei chunk con i metadati per il salvataggio.
+    Restituisce una tupla contenente:
+    1. Lista di dizionari con i dati completi dei chunk
+    2. Lista di ID dei chunk
+    3. Lista di dizionari dei metadati per Pinecone
+    4. Lista di testi dei chunk
     """
     chunk_ids = [f"{metadata['filename']}_{str(i+1).zfill(3)}" for i in range(len(chunks))]
     chunk_titles = [extract_title(chunk) for chunk in chunks]
     
-    # Prepare full chunk data for JSON storage
+    # Prepara i dati completi dei chunk per il salvataggio in JSON
     chunks_data = []
-    # Prepare metadata list for Pinecone
+    # Prepara la lista dei metadati per Pinecone
     pinecone_metadata = []
     
     for chunk_id, title, text in zip(chunk_ids, chunk_titles, chunks):
-        # Full chunk data for JSON
+        # Dati completi del chunk per il salvataggio in JSON
         chunk_data = {
             'id': chunk_id,
             'filename': metadata['filename'],
@@ -80,7 +82,7 @@ def prepare_chunks_data(chunks, metadata):
         }
         chunks_data.append(chunk_data)
         
-        # Metadata for Pinecone
+        # Metadati per Pinecone
         pinecone_metadata.append({
             'filename': metadata['filename'],
             'datetime': metadata['datetime'],
@@ -91,19 +93,19 @@ def prepare_chunks_data(chunks, metadata):
 
 def save_to_json(chunks_data, output_file='output/output_chunks.json'):
     """
-    Saves chunks to a JSON file with related metadata.
+    Salva i chunk in un file JSON con i metadati correlati.
     """
     try:
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(chunks_data, f, ensure_ascii=False, indent=2)
-        print(f"Chunks successfully saved to {output_file}")
+        print(f"Chunk salvati con successo in {output_file}")
     except Exception as e:
-        print(f"Error saving JSON: {e}")
+        print(f"Errore salvando il JSON: {e}")
 
 def upload_to_pinecone(chunk_ids, chunks, metadatas):
     """
-    Uploads chunks to Pinecone using LangChain's Pinecone VectorStore.
+    Carica i chunk su Pinecone utilizzando LangChain's Pinecone VectorStore.
     """
     load_dotenv()
 
@@ -111,19 +113,19 @@ def upload_to_pinecone(chunk_ids, chunks, metadatas):
     PINECONE_ENVIRONMENT = os.getenv('PINECONE_ENVIRONMENT')
 
     if not PINECONE_API_KEY or not PINECONE_ENVIRONMENT:
-        print("Pinecone API Key or Environment not properly configured.")
+        print("Chiave API o Ambiente Pinecone non configurati correttamente.")
         return
 
     try:
         index_name = 'aistruttore'
         namespace = 'aistruttore1'
 
-        # Initialize embeddings
+        # Inizializza gli embeddings
         embeddings = OpenAIEmbeddings(
             model="text-embedding-3-small"
         )
 
-        # Upload data using LangChain's Pinecone VectorStore
+        # Carica i dati utilizzando LangChain's Pinecone VectorStore
         vectorstore = PineconeVectorStore.from_texts(
             texts=chunks,
             embedding=embeddings,
@@ -133,13 +135,13 @@ def upload_to_pinecone(chunk_ids, chunks, metadatas):
             ids=chunk_ids,
             text_key="text"
         )
-        print(f"Chunks successfully uploaded to Pinecone in index '{index_name}' and namespace '{namespace}'.")
+        print(f"Chunk caricati con successo su Pinecone nell'indice '{index_name}' e namespace '{namespace}'.")
     except Exception as e:
-        print(f"Error uploading to Pinecone: {e}")
+        print(f"Errore caricando su Pinecone: {e}")
 
 def is_url(path):
     """
-    Check if the given path is a URL.
+    Controlla se il percorso fornito è un URL.
     """
     try:
         result = urlparse(path)
@@ -149,69 +151,16 @@ def is_url(path):
 
 def download_markdown_from_url(url):
     """
-    Downloads markdown content from a URL.
+    Scarica il contenuto Markdown da un URL.
     """
     try:
         response = requests.get(url)
         response.raise_for_status()
         return response.text
     except Exception as e:
-        print(f"Error downloading from URL: {e}")
+        print(f"Errore scaricando dall'URL: {e}")
         return None
-
-def main():
-    # User input
-    file_path = input("Enter the path to the Markdown file (.md): ").strip("'")
-
-    # Handle both URLs and local files
-    if is_url(file_path):
-        content = download_markdown_from_url(file_path)
-    else:
-        if not os.path.isfile(file_path):
-            print("The specified file does not exist.")
-            return
-        content = load_markdown(file_path)
-
-    if content is None:
-        return
-
-    chunks = split_into_chunks(content)
-
-    metadata = {
-        'filename': os.path.basename(file_path),
-        'datetime': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    }
-    filename = os.path.basename(file_path)
-    print(f"\nCreated {len(chunks)} chunks from file '{filename}'")
-
-    # Print extracted titles for verification
-    print("\nExtracted titles:")
-    for i, chunk in enumerate(chunks, 1):
-        title = extract_title(chunk)
-        print(f"Chunk {i}: {title}")
-
-    # Ask user where to save the chunks
-    print("\nWhere do you want to save the chunks?")
-    print("1. Save locally to JSON")
-    print("2. Upload to Pinecone")
-    print("3. Both")
-
-    choice = input("Enter your choice (1/2/3): ").strip()
-
-    # Prepare chunks data for all cases
-    chunks_data, chunk_ids, pinecone_metadata, chunks_text = prepare_chunks_data(chunks, metadata)
     
-    if choice == '1':
-        output_file = f"output/{filename}_{datetime.now().strftime('%Y-%m-%d %H:%M')}.json"
-        save_to_json(chunks_data, output_file)
-    elif choice == '2':
-        upload_to_pinecone(chunk_ids, chunks_text, pinecone_metadata)
-    elif choice == '3':
-        output_file = f"output/{filename}_{datetime.now().strftime('%Y-%m-%d %H:%M')}.json"
-        save_to_json(chunks_data, output_file)
-        upload_to_pinecone(chunk_ids, chunks_text, pinecone_metadata)
-    else:
-        print("Invalid choice. Exiting program.")
-
 if __name__ == "__main__":
-    main()
+    import uvicorn
+    uvicorn.run(api_app, host="0.0.0.0", port=8000)
