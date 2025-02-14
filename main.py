@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 from datetime import datetime
 from dotenv import load_dotenv
@@ -160,21 +161,26 @@ def download_markdown_from_url(url):
         return None
 
 def main():
-    # User input
-    file_path = input("Enter the path to the Markdown file (.md): ").strip("'")
 
+    if len(sys.argv) < 2:
+       file_path = input("Enter the path to the Markdown file (.md): ").strip("'")
+    else:
+        file_path = sys.argv[1]
     # Handle both URLs and local files
     if is_url(file_path):
         content = download_markdown_from_url(file_path)
     else:
         if not os.path.isfile(file_path):
-            print("The specified file does not exist.")
+            print(f"The specified file does not exist: {file_path}")
             return
         content = load_markdown(file_path)
 
     if content is None:
+        print(f"Error reading file. The file is either not accessible or not supported: {file_path}")
+        print("Make that the file is accessible and a compatible markdown .md format and try again.")
         return
 
+    print(f"chunking file from url: {file_path}")
     chunks = split_into_chunks(content)
 
     metadata = {
@@ -191,27 +197,34 @@ def main():
         print(f"Chunk {i}: {title}")
 
     # Ask user where to save the chunks
-    print("\nWhere do you want to save the chunks?")
-    print("1. Save locally to JSON")
-    print("2. Upload to Pinecone")
-    print("3. Both")
 
-    choice = input("Enter your choice (1/2/3): ").strip()
+    if len(sys.argv) < 3:
+        print("\nWhere do you want to save the chunks?")
+        print("1. Save locally to JSON")
+        print("2. Upload to Pinecone")
+        print("3. Both")
+
+        choice = input("Enter your choice (1/2/3): ").strip()
+    else:
+        choice = sys.argv[2]
 
     # Prepare chunks data for all cases
     chunks_data, chunk_ids, pinecone_metadata, chunks_text = prepare_chunks_data(chunks, metadata)
     
     if choice == '1':
+        print("\nSaving chunks locally to JSON...")
         output_file = f"output/{filename}_{datetime.now().strftime('%Y-%m-%d %H:%M')}.json"
         save_to_json(chunks_data, output_file)
     elif choice == '2':
+        print("\nUploading chunks to Pinecone...")
         upload_to_pinecone(chunk_ids, chunks_text, pinecone_metadata)
     elif choice == '3':
+        print("\nSaving chunks locally to JSON and uploading to Pinecone...")
         output_file = f"output/{filename}_{datetime.now().strftime('%Y-%m-%d %H:%M')}.json"
         save_to_json(chunks_data, output_file)
         upload_to_pinecone(chunk_ids, chunks_text, pinecone_metadata)
     else:
-        print("Invalid choice. Exiting program.")
+        print(f"\nInvalid choice: {choice}. Exiting program.")
 
 if __name__ == "__main__":
     main()
